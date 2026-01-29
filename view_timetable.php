@@ -2,74 +2,138 @@
 include("../includes/auth.php");
 include("../includes/db.php");
 
-if($_SESSION['user_type']!='Admin'){header("Location:../login.php");exit;}
+/* ===== ALLOW ONLY FACULTY ===== */
+if ($_SESSION['user_type'] !== 'Faculty') {
+    header("Location: ../login.php");
+    exit;
+}
 
-$where="";
-if(isset($_GET['course_code'])){
-$where="WHERE ct.course_code='{$_GET['course_code']}'
-AND ct.semester_number='{$_GET['semester_number']}'
-AND ct.academic_year='{$_GET['academic_year']}'";
+$faculty_id = $_SESSION['user_id'];
+
+$date   = $_GET['date'] ?? '';
+$year   = $_GET['academic_year'] ?? '';
+$sem    = $_GET['semester_number'] ?? '';
+
+if ($date) {
+    $date = date('Y-m-d', strtotime($date));
 }
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-<title>View Timetable</title>
+<title>Faculty Timetable</title>
+
 <style>
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
+body{font-family:Arial;background:#f4f6f8;}
+.box{
+    width:600px;
+    margin:25px auto;
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+}
+.row{
+    border-bottom:1px solid #ddd;
+    padding:10px 0;
+}
+.badge{
+    background:#6c757d;
+    color:#fff;
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:12px;
+}
+.error{color:red;}
+.info{color:#0d6efd;}
 </style>
 </head>
+
 <body>
 
+<div class="box">
+<h3>📘 My Timetable</h3>
+
 <form method="get">
-<select name="course_code">
+Date:
+<input type="date" name="date" required>
+
+Academic Year:
+<select name="academic_year" required>
 <?php
-$c=mysqli_query($conn,"SELECT course_code,course_name FROM courses");
-while($r=mysqli_fetch_assoc($c))
-echo "<option value='{$r['course_code']}'>{$r['course_name']}</option>";
+$ay = mysqli_query($conn,"SELECT DISTINCT academic_year FROM academic_periods");
+while($r=mysqli_fetch_assoc($ay)){
+    echo "<option>{$r['academic_year']}</option>";
+}
 ?>
 </select>
 
-<select name="semester_number">
+Semester:
+<select name="semester_number" required>
 <?php for($i=1;$i<=6;$i++) echo "<option>$i</option>"; ?>
 </select>
 
-<select name="academic_year">
-<?php
-$ay=mysqli_query($conn,"SELECT DISTINCT academic_year FROM academic_periods");
-while($r=mysqli_fetch_assoc($ay)) echo "<option>{$r['academic_year']}</option>";
-?>
-</select>
-<button>View</button>
+<button type="submit">View</button>
 </form>
 
-<table>
-<tr>
-<th>Date</th><th>Day</th><th>Period</th>
-<th>Subject</th><th>Faculty</th><th>Room</th>
-</tr>
+<hr>
 
 <?php
-$q=mysqli_query($conn,"
-SELECT ct.*,s.subject_name,
-CONCAT(f.first_name,' ',f.last_name) faculty
-FROM class_timetable ct
-JOIN subjects s ON s.subject_code=ct.subject_code
-JOIN faculty f ON f.faculty_id=ct.faculty_id
-$where ORDER BY class_date,period_number
-");
-while($r=mysqli_fetch_assoc($q)){
-echo "<tr>
-<td>{$r['class_date']}</td>
-<td>{$r['day']}</td>
-<td>{$r['period_number']}</td>
-<td>{$r['subject_name']}</td>
-<td>{$r['faculty']}</td>
-<td>{$r['room_no']}</td>
-</tr>";
+if ($date && $year && $sem) {
+
+    /* ===== DATE MAPPING ===== */
+    $actualDay = date('l', strtotime($date));
+
+    $map = mysqli_query($conn,"
+        SELECT is_working, follow_day
+        FROM date_timetable_mapping
+        WHERE date='$date'
+    ");
+
+    if(mysqli_num_rows($map)){
+        $m = mysqli_fetch_assoc($map);
+
+        if($m['is_working']=='No'){
+            echo "<p class='error'>❌ Holiday – No classes</p>";
+            exit;
+        }
+
+        $dayToUse = $m['follow_day'] ?: $actualDay;
+    } else {
+        $dayToUse = $actualDay;
+    }
+
+    echo "<p class='info'>📅 Following <b>$dayToUse</b> timetable</p>";
+
+    /* ===== FACULTY-ONLY TIMETABLE ===== */
+    $tt = mysqli_query($conn,"
+        SELECT ct.period_number,
+               s.subject_name,
+               ct.room_no,
+               ct.batch
+        FROM class_timetable ct
+        JOIN subjects s ON ct.subject_code=s.subject_code
+        WHERE ct.faculty_id='$faculty_id'
+          AND ct.academic_year='$year'
+          AND ct.semester_number='$sem'
+          AND ct.day='$dayToUse'
+        ORDER BY ct.period_number
+    ");
+
+    if(mysqli_num_rows($tt)==0){
+        echo "<p class='error'>No classes assigned.</p>";
+    }
+
+    while($r=mysqli_fetch_assoc($tt)){
+        echo "<div class='row'>";
+        echo "<b>Period {$r['period_number']}</b><br>";
+        echo "{$r['subject_name']}<br>";
+        echo "Room {$r['room_no']} ";
+        echo "<span class='badge'>Batch {$r['batch']}</span>";
+        echo "</div>";
+    }
 }
 ?>
-</table>
+
+</div>
 </body>
 </html>

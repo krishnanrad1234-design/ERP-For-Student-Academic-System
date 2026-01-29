@@ -1,7 +1,7 @@
 <?php
 include("../includes/auth.php");
 
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Admin') {
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Faculty') {
     header("Location: ../login.php");
     exit;
 }
@@ -10,13 +10,9 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Admin') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard</title>
-
-<!-- ===== FONT AWESOME (REAL ERP ICONS) ===== -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<title>Faculty Dashboard</title>
 
 <style>
-/* ===== RESET ===== */
 *{
     margin:0;
     padding:0;
@@ -28,84 +24,49 @@ body{
     background:#f4f6f8;
 }
 
-/* ===== LAYOUT ===== */
+/* MAIN LAYOUT */
 .wrapper{
     display:flex;
     height:100vh;
 }
 
-/* ===== SIDEBAR ===== */
+/* LEFT SIDEBAR */
 .sidebar{
     width:260px;
-    background:linear-gradient(180deg, #0b1d4d, #0a1435);
-    color:#fff;
+    background:#1e7e34;
+    padding:20px;
 }
 
-/* ===== SIDEBAR HEADER ===== */
-.sidebar-header{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:18px 20px;
-    border-bottom:1px solid rgba(255,255,255,0.2);
+.sidebar h3{
+    color:#ffffff;
+    text-align:center;
+    margin-bottom:10px;
 }
 
-.sidebar-header .avatar{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    background:#2F6FB2;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
-    font-size:16px;
+.sidebar p{
+    color:#ffffff;
+    text-align:center;
+    font-size:14px;
+    margin-bottom:20px;
 }
 
-.sidebar-header h3{
-    font-size:16px;
-}
-
-/* ===== MENU ===== */
-.menu{
-    list-style:none;
-    padding-top:10px;
-}
-
-.menu li{
-    padding:12px 20px;
-}
-
-.menu li a{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    color:#e0e6ff;
+.sidebar a{
+    display:block;
+    padding:12px;
+    margin-bottom:12px;
+    background:#28a745;
+    color:#ffffff;
     text-decoration:none;
+    text-align:center;
+    border-radius:5px;
     font-size:14px;
 }
 
-.menu li i{
-    width:18px;
-    text-align:center;
-    font-size:15px;
+.sidebar a:hover{
+    background:#218838;
 }
 
-.menu li:hover{
-    background:rgba(255,255,255,0.08);
-}
-
-/* ===== LOGOUT ===== */
-.menu li.logout{
-    margin-top:20px;
-    border-top:1px solid rgba(255,255,255,0.2);
-}
-
-.menu li.logout a{
-    color:#ffb3b3;
-}
-
-/* ===== CONTENT ===== */
+/* RIGHT CONTENT */
 .main-content{
     flex:1;
     background:#ffffff;
@@ -117,104 +78,29 @@ body{
     border:none;
 }
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="wrapper">
 
-    <!-- ===== SIDEBAR ===== -->
+    <!-- LEFT FACULTY DASHBOARD -->
     <div class="sidebar">
+        <h3>Faculty Dashboard</h3>
+        <p>ID: <?= htmlspecialchars($_SESSION['user_id']) ?></p>
 
-        <!-- HEADER -->
-        <div class="sidebar-header">
-            <div class="avatar">
-                <i class="fa-solid fa-user-shield"></i>
-            </div>
-            <h3>Admin</h3>
-        </div>
-
-        <!-- MENU (ONLY YOUR LINKS) -->
-        <ul class="menu">
-
-            <li>
-                <a href="subject_management.php" target="contentFrame">
-                    <i class="fa-solid fa-book"></i>
-                    Subject Management
-                </a>
-            </li>
-
-            
-            <li>
-                <a href="assign_and_report_subjects.php" target="contentFrame">
-                    <i class="fa-solid fa-chalkboard-user"></i>
-                    Faculty Subject Assignment
-                </a>
-            </li>
-
-              <li>
-                <a href="assign_and_view_student_batches.php" target="contentFrame">
-                    <i class="fa-solid fa-people-group"></i>
-                    Student Batch Management
-                </a>
-            </li>
-
-            <li>
-                <a href="admin_timetable.php" target="contentFrame">
-                    <i class="fa-solid fa-calendar-plus"></i>
-                    Timetable Management
-                </a>
-            </li>
-
-            <li>
-                <a href="admin_date_timetable.php" target="contentFrame">
-                    <i class="fa-solid fa-table"></i>
-                    Date-wise Timetable
-                </a>
-            </li>
-
-            <li>
-                <a href="admin_attendance_report.php" target="contentFrame">
-                    <i class="fa-solid fa-layer-group"></i>
-                    Assign Batch
-                </a>
-            </li>
-
-            
-
-            <li>
-                <a href="view_student_batches.php" target="contentFrame">
-                    <i class="fa-solid fa-users"></i>
-                    View Student Batch List
-                </a>
-            </li>
-
-            <li>
-                <a href="create_timetable_form.php" target="contentFrame">
-                    <i class="fa-solid fa-file-lines"></i>
-                    Create Timetable
-                </a>
-            </li>
-
-            <li>
-    <a href="../attendance/admin_attendance_report.php" target="contentFrame">
+        <a href="my_subjects.php" target="contentFrame">My Subjects</a>
+        <a href="view_timetable.php" target="contentFrame">My Timetable</a>
+           <li>
+    <a href="../attendance/faculty_mark_attendance.php" target="contentFrame">
         <i class="fa-solid fa-clipboard-check"></i>
-        Attendance Report
+        Student Attendance 
     </a>
 </li>
-
-
-            <li class="logout">
-                <a href="../logout.php">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Logout
-                </a>
-            </li>
-
-        </ul>
+        <a href="../logout.php">Logout</a>
     </div>
 
-    <!-- ===== RIGHT CONTENT ===== -->
+    <!-- RIGHT SIDE CONTENT -->
     <div class="main-content">
         <iframe name="contentFrame"></iframe>
     </div>
