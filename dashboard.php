@@ -1,7 +1,7 @@
 <?php
 include("../includes/auth.php");
 
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Faculty') {
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Student') {
     header("Location: ../login.php");
     exit;
 }
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Faculty') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Faculty Dashboard</title>
+<title>Student Dashboard</title>
 
 <style>
 *{
@@ -33,7 +33,7 @@ body{
 /* LEFT SIDEBAR */
 .sidebar{
     width:260px;
-    background:#1e7e34;
+    background:#0056b3;
     padding:20px;
 }
 
@@ -54,7 +54,7 @@ body{
     display:block;
     padding:12px;
     margin-bottom:12px;
-    background:#28a745;
+    background:#007bff;
     color:#ffffff;
     text-decoration:none;
     text-align:center;
@@ -63,7 +63,7 @@ body{
 }
 
 .sidebar a:hover{
-    background:#218838;
+    background:#004a99;
 }
 
 /* RIGHT CONTENT */
@@ -84,17 +84,17 @@ body{
 
 <div class="wrapper">
 
-    <!-- LEFT FACULTY DASHBOARD -->
+    <!-- LEFT STUDENT DASHBOARD -->
     <div class="sidebar">
-        <h3>Faculty Dashboard</h3>
+        <h3>Student Dashboard</h3>
         <p>ID: <?= htmlspecialchars($_SESSION['user_id']) ?></p>
 
         <a href="my_subjects.php" target="contentFrame">My Subjects</a>
         <a href="view_timetable.php" target="contentFrame">My Timetable</a>
            <li>
-    <a href="../attendance/faculty_mark_attendance.php" target="contentFrame">
+    <a href="../attendance/student_attendance_view.php" target="contentFrame">
         <i class="fa-solid fa-clipboard-check"></i>
-        Student Attendance 
+        Attendance Report
     </a>
 </li>
         <a href="../logout.php">Logout</a>

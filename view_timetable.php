@@ -2,17 +2,26 @@
 include("../includes/auth.php");
 include("../includes/db.php");
 
-/* ===== ALLOW ONLY FACULTY ===== */
-if ($_SESSION['user_type'] !== 'Faculty') {
+/* ===== ALLOW ONLY STUDENT ===== */
+if ($_SESSION['user_type'] !== 'Student') {
     header("Location: ../login.php");
     exit;
 }
 
-$faculty_id = $_SESSION['user_id'];
+$student_id = $_SESSION['user_id'];
 
-$date   = $_GET['date'] ?? '';
-$year   = $_GET['academic_year'] ?? '';
-$sem    = $_GET['semester_number'] ?? '';
+/* ===== STUDENT DETAILS ===== */
+$s = mysqli_fetch_assoc(mysqli_query($conn,"
+    SELECT course_code, current_semester
+    FROM students
+    WHERE student_id='$student_id'
+"));
+
+$course = $s['course_code'];
+$sem    = $s['current_semester'];
+
+$date = $_GET['date'] ?? '';
+$year = $_GET['academic_year'] ?? '';
 
 if ($date) {
     $date = date('Y-m-d', strtotime($date));
@@ -21,7 +30,7 @@ if ($date) {
 <!DOCTYPE html>
 <html>
 <head>
-<title>Faculty Timetable</title>
+<title>Student Timetable</title>
 
 <style>
 body{font-family:Arial;background:#f4f6f8;}
@@ -51,7 +60,7 @@ body{font-family:Arial;background:#f4f6f8;}
 <body>
 
 <div class="box">
-<h3>📘 My Timetable</h3>
+<h3>📘 My Class Timetable</h3>
 
 <form method="get">
 Date:
@@ -67,20 +76,14 @@ while($r=mysqli_fetch_assoc($ay)){
 ?>
 </select>
 
-Semester:
-<select name="semester_number" required>
-<?php for($i=1;$i<=6;$i++) echo "<option>$i</option>"; ?>
-</select>
-
 <button type="submit">View</button>
 </form>
 
 <hr>
 
 <?php
-if ($date && $year && $sem) {
+if ($date && $year) {
 
-    /* ===== DATE MAPPING ===== */
     $actualDay = date('l', strtotime($date));
 
     $map = mysqli_query($conn,"
@@ -90,7 +93,7 @@ if ($date && $year && $sem) {
     ");
 
     if(mysqli_num_rows($map)){
-        $m = mysqli_fetch_assoc($map);
+        $m=mysqli_fetch_assoc($map);
 
         if($m['is_working']=='No'){
             echo "<p class='error'>❌ Holiday – No classes</p>";
@@ -104,29 +107,43 @@ if ($date && $year && $sem) {
 
     echo "<p class='info'>📅 Following <b>$dayToUse</b> timetable</p>";
 
-    /* ===== FACULTY-ONLY TIMETABLE ===== */
+    /* ===== STUDENT BATCH ===== */
+    $b = mysqli_fetch_assoc(mysqli_query($conn,"
+        SELECT batch
+        FROM student_batches
+        WHERE student_id='$student_id'
+          AND academic_year='$year'
+          AND semester_number='$sem'
+    "));
+    $batch = $b['batch'] ?? 'ALL';
+
+    /* ===== STUDENT TIMETABLE ===== */
     $tt = mysqli_query($conn,"
         SELECT ct.period_number,
                s.subject_name,
+               CONCAT(f.first_name,' ',f.last_name) faculty,
                ct.room_no,
                ct.batch
         FROM class_timetable ct
         JOIN subjects s ON ct.subject_code=s.subject_code
-        WHERE ct.faculty_id='$faculty_id'
+        JOIN faculty f ON ct.faculty_id=f.faculty_id
+        WHERE ct.course_code='$course'
           AND ct.academic_year='$year'
           AND ct.semester_number='$sem'
           AND ct.day='$dayToUse'
+          AND (ct.batch='ALL' OR ct.batch='$batch')
         ORDER BY ct.period_number
     ");
 
     if(mysqli_num_rows($tt)==0){
-        echo "<p class='error'>No classes assigned.</p>";
+        echo "<p class='error'>No classes found.</p>";
     }
 
     while($r=mysqli_fetch_assoc($tt)){
         echo "<div class='row'>";
         echo "<b>Period {$r['period_number']}</b><br>";
         echo "{$r['subject_name']}<br>";
+        echo "{$r['faculty']}<br>";
         echo "Room {$r['room_no']} ";
         echo "<span class='badge'>Batch {$r['batch']}</span>";
         echo "</div>";
